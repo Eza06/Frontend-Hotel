@@ -1,1 +1,66 @@
 @import "tailwindcss";
+
+/* Scale all font sizes up by exactly one level in Guest and Reservation Management */
+.guest-mgmt-wrapper, .res-mgmt-wrapper {
+  font-size: 14px;
+}
+
+/* 8px -> 9px */
+.guest-mgmt-wrapper .text-\[8px\],
+.res-mgmt-wrapper .text-\[8px\] {
+  font-size: 9px !important;
+}
+
+/* 9px -> 10px */
+.guest-mgmt-wrapper .text-\[9px\],
+.res-mgmt-wrapper .text-\[9px\] {
+  font-size: 10px !important;
+}
+
+/* 10px -> 11px */
+.guest-mgmt-wrapper .text-\[10px\],
+.res-mgmt-wrapper .text-\[10px\] {
+  font-size: 11px !important;
+}
+
+/* 11px -> 12px (text-xs) */
+.guest-mgmt-wrapper .text-\[11px\],
+.res-mgmt-wrapper .text-\[11px\] {
+  font-size: 0.75rem !important; /* 12px */
+}
+
+/* 12px (text-xs) -> 14px (text-sm) */
+.guest-mgmt-wrapper .text-xs,
+.res-mgmt-wrapper .text-xs {
+  font-size: 0.875rem !important; /* 14px */
+}
+
+/* 14px (text-sm) -> 16px (text-base) */
+.guest-mgmt-wrapper .text-sm,
+.res-mgmt-wrapper .text-sm {
+  font-size: 1rem !important; /* 16px */
+}
+
+/* 16px (text-base) -> 18px (text-lg) */
+.guest-mgmt-wrapper .text-base,
+.res-mgmt-wrapper .text-base {
+  font-size: 1.125rem !important; /* 18px */
+}
+
+/* 18px (text-lg) -> 20px (text-xl) */
+.guest-mgmt-wrapper .text-lg,
+.res-mgmt-wrapper .text-lg {
+  font-size: 1.25rem !important; /* 20px */
+}
+
+/* 20px (text-xl) -> 24px (text-2xl) */
+.guest-mgmt-wrapper .text-xl,
+.res-mgmt-wrapper .text-xl {
+  font-size: 1.5rem !important; /* 24px */
+}
+
+/* 24px (text-2xl) -> 30px (text-3xl) */
+.guest-mgmt-wrapper .text-2xl,
+.res-mgmt-wrapper .text-2xl {
+  font-size: 1.875rem !important; /* 30px */
+}
