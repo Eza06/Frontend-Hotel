@@ -10,7 +10,7 @@ import {
   ShieldAlert,
   ArrowRight
 } from 'lucide-react';
-import type { User } from '../types';
+import type { User } from '../../types';
 
 export const DEMO_ACCOUNTS: User[] = [
   { nip: 'NIP-ADMIN', name: 'Budi Santoso', role: 'Administrator', pass: 'admin123' },
@@ -243,7 +243,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
           <CheckCircle2 className="w-5 h-5 text-[#22C55E] shrink-0 mt-0.5" />
           <div className="flex-1">
             <h4 className="text-xs font-bold text-[#1E3A5F]">Papan Uji Akun Simulasi</h4>
-            <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed">
+            <p className="text-[10px] text-gray-555 mt-0.5 leading-relaxed">
               Klik salah satu akun di bawah untuk mengisi form login secara instan:
             </p>
             <div className="mt-3 space-y-1.5">

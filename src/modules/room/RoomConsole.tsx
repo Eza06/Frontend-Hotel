@@ -11,7 +11,7 @@ import {
   CheckCircle,
   Layers
 } from 'lucide-react';
-import type { Room, CheckInGuest, CheckOutGuest } from '../types';
+import type { Room, CheckInGuest, CheckOutGuest } from '../../types';
 
 interface RoomConsoleProps {
   rooms: Room[];
@@ -359,7 +359,6 @@ export default function RoomConsole({
 
                             <button
                               onClick={() => {
-                                // For simulation, auto fill guest name if set to occupied
                                 setRooms(prev => prev.map(r => r.id === room.id ? { ...r, status: 'occupied', guestName: r.guestName || 'Tamu Baru Simulasi' } : r));
                                 setEditingRoomId(null);
                               }}

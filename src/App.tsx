@@ -7,23 +7,19 @@ import {
   INITIAL_SERVICE_REQUESTS, 
   INITIAL_FB_ORDERS 
 } from './data/mockData';
-import Login from './components/Login';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import ProfileSlideOut from './components/ProfileSlideOut';
-import Dashboard from './components/Dashboard';
-import RoomConsole from './components/RoomConsole';
-import { 
-  GuestManagement, 
-  ReservationManagement, 
-  CheckInManagement, 
-  CheckOutManagement, 
-  HousekeepingManagement, 
-  CustomerServiceManagement, 
-  FoodBeverageManagement, 
-  ReportsManagement, 
-  SettingsManagement 
-} from './components/SecondaryModules';
+import Login from './modules/auth/Login';
+import Sidebar from './components/layouts/Sidebar';
+import Header from './components/layouts/Header';
+import ProfileSlideOut from './components/layouts/ProfileSlideOut';
+import Dashboard from './modules/dashboard/Dashboard';
+import RoomConsole from './modules/room/RoomConsole';
+import { GuestManagement } from './modules/guest/GuestManagement';
+import { ReservationManagement } from './modules/reservation/ReservationManagement';
+import HousekeepingManagement from './modules/housekeeping/HousekeepingManagement';
+import CustomerServiceManagement from './modules/customer-service/CustomerServiceManagement';
+import FoodBeverageManagement from './modules/food-beverage/FoodBeverageManagement';
+import ReportsManagement from './modules/reports/ReportsManagement';
+import SettingsManagement from './modules/settings/SettingsManagement';
 
 export default function App() {
   // Authentication states (Defaults to Administrator for instant simulation load)
@@ -159,19 +155,7 @@ export default function App() {
 
           {activeTab === 'reservation' && <ReservationManagement setActiveTab={setActiveTab} />}
 
-          {activeTab === 'checkin' && (
-            <CheckInManagement 
-              checkins={checkins}
-              handleCheckInAction={handleCheckInAction}
-            />
-          )}
 
-          {activeTab === 'checkout' && (
-            <CheckOutManagement 
-              checkouts={checkouts}
-              handleCheckOutAction={handleCheckOutAction}
-            />
-          )}
 
           {activeTab === 'housekeeping' && (
             <HousekeepingManagement 

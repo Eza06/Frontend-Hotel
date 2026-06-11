@@ -55,3 +55,30 @@ export interface User {
   role: string;
   pass: string;
 }
+
+export interface EnrichedTicket {
+  id: number;
+  code: string;
+  type: string;
+  guestName: string;
+  roomNum: number;
+  stayDay: string;
+  assigneeName: string;
+  priority: 'Critical' | 'Medium' | 'Low';
+  status: 'Pending' | 'On Progress' | 'Resolved';
+  createdTime: string;
+  assignedTime?: string;
+  resolvedTime?: string;
+}
+
+export interface OperationalReport {
+  id: string;
+  name: string;
+  code: string;
+  category: 'HOUSEKEEPING' | 'GUEST OPS' | 'RESERVATION' | 'SERVICE';
+  generatedBy: string;
+  dateRange: string;
+  status: 'VERIFIED' | 'PROCESSING' | 'NEEDS REVIEW';
+  totalItems: number;
+  incidents: number;
+}

@@ -1,5 +1,5 @@
 import { X, LogOut, Shield } from 'lucide-react';
-import type { User } from '../types';
+import type { User } from '../../types';
 
 interface ProfileSlideOutProps {
   isOpen: boolean;

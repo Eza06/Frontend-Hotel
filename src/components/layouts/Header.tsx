@@ -1,5 +1,5 @@
 import { Search } from 'lucide-react';
-import type { User } from '../types';
+import type { User } from '../../types';
 
 interface HeaderProps {
   activeTab: string;
@@ -17,7 +17,7 @@ export default function Header({ activeTab, loggedInUser, currentTime }: HeaderP
       case 'guest':
         return 'Guest Database';
       case 'reservation':
-        return 'Buku Reservasi';
+        return 'Booking & Reservation';
       case 'checkin':
         return 'Front Desk Check-In';
       case 'checkout':

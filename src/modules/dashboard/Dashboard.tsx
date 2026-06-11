@@ -8,7 +8,7 @@ import {
   ChevronRight,
   Bell
 } from 'lucide-react';
-import type { CheckInGuest, CheckOutGuest, ServiceRequest } from '../types';
+import type { CheckInGuest, CheckOutGuest, ServiceRequest } from '../../types';
 
 interface DashboardProps {
   availableCount: number;

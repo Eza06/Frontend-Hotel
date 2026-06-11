@@ -3,8 +3,6 @@ import {
   BedDouble, 
   Users, 
   Calendar, 
-  UserCheck, 
-  UserX, 
   Brush, 
   ConciergeBell, 
   UtensilsCrossed, 
@@ -12,7 +10,7 @@ import {
   Settings as SettingsIcon,
   ChevronRight
 } from 'lucide-react';
-import type { User } from '../types';
+import type { User } from '../../types';
 
 interface SidebarProps {
   activeTab: 'dashboard' | 'room' | 'guest' | 'reservation' | 'checkin' | 'checkout' | 'housekeeping' | 'cs' | 'fb' | 'reports' | 'settings';
@@ -26,9 +24,7 @@ export default function Sidebar({ activeTab, setActiveTab, loggedInUser, setShow
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'room', label: 'Room', icon: BedDouble },
     { id: 'guest', label: 'Guest Management', icon: Users },
-    { id: 'reservation', label: 'Reservation Management', icon: Calendar },
-    { id: 'checkin', label: 'Check In', icon: UserCheck },
-    { id: 'checkout', label: 'Check Out', icon: UserX },
+    { id: 'reservation', label: 'Booking & Reservation', icon: Calendar },
     { id: 'housekeeping', label: 'Housekeeping', icon: Brush },
     { id: 'cs', label: 'Customer Service', icon: ConciergeBell },
     { id: 'fb', label: 'Food & Beverage', icon: UtensilsCrossed },
