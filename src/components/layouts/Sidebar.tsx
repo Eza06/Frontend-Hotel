@@ -7,30 +7,44 @@ import {
   ConciergeBell, 
   UtensilsCrossed, 
   BarChart3, 
-  Settings as SettingsIcon,
-  ChevronRight
+  ChevronRight,
+  Database
 } from 'lucide-react';
 import type { User } from '../../types';
 
 interface SidebarProps {
-  activeTab: 'dashboard' | 'room' | 'guest' | 'reservation' | 'checkin' | 'checkout' | 'housekeeping' | 'cs' | 'fb' | 'reports' | 'settings';
+  activeTab: 'dashboard' | 'room' | 'guest' | 'reservation' | 'housekeeping' | 'cs' | 'fb' | 'reports' | 'master';
   setActiveTab: (tab: any) => void;
   loggedInUser: User;
   setShowProfileSlideOut: (show: boolean) => void;
 }
 
+const ROLE_ALLOWED_TABS: Record<string, string[]> = {
+  'Administrator': ['dashboard', 'room', 'guest', 'reservation', 'housekeeping', 'cs', 'fb', 'reports', 'master'],
+  'Hotel Manager': ['dashboard', 'room', 'guest', 'reservation', 'housekeeping', 'cs', 'fb', 'reports', 'master'],
+  'Front Office': ['dashboard', 'room', 'guest', 'reservation'],
+  'Front Office Supervisor': ['dashboard', 'room', 'guest', 'reservation'],
+  'Housekeeping': ['dashboard'],
+  'Housekeeping Supervisor': ['dashboard'],
+  'Customer Service': ['dashboard', 'cs'],
+  'Food & Beverage': ['dashboard', 'fb']
+};
+
 export default function Sidebar({ activeTab, setActiveTab, loggedInUser, setShowProfileSlideOut }: SidebarProps) {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'room', label: 'Room', icon: BedDouble },
+    { id: 'room', label: 'Room & Floor Map', icon: BedDouble },
     { id: 'guest', label: 'Guest Management', icon: Users },
     { id: 'reservation', label: 'Booking & Reservation', icon: Calendar },
     { id: 'housekeeping', label: 'Housekeeping', icon: Brush },
     { id: 'cs', label: 'Customer Service', icon: ConciergeBell },
     { id: 'fb', label: 'Food & Beverage', icon: UtensilsCrossed },
     { id: 'reports', label: 'Reports', icon: BarChart3 },
-    { id: 'settings', label: 'Settings', icon: SettingsIcon },
+    { id: 'master', label: 'Master Data', icon: Database },
   ];
+
+  const allowedTabs = ROLE_ALLOWED_TABS[loggedInUser.role] || ['dashboard'];
+  const filteredNavItems = navItems.filter(item => allowedTabs.includes(item.id));
 
   return (
     <aside className="w-64 bg-[#1E3A5F] text-white flex flex-col justify-between shrink-0 z-20 shadow-lg border-r border-white/5 min-h-screen">
@@ -51,7 +65,7 @@ export default function Sidebar({ activeTab, setActiveTab, loggedInUser, setShow
 
         {/* Navigation links */}
         <nav className="p-4 space-y-1">
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const IconComponent = item.icon;
             const isActive = activeTab === item.id;
             return (

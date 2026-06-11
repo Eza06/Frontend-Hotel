@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import type { User, Room, CheckInGuest, CheckOutGuest, ServiceRequest, FBOrder } from './types';
+import type { User, Room, CheckInGuest, CheckOutGuest, ServiceRequest } from './types';
 import { 
   generateInitialRooms, 
   INITIAL_CHECKINS, 
   INITIAL_CHECKOUTS, 
-  INITIAL_SERVICE_REQUESTS, 
-  INITIAL_FB_ORDERS 
+  INITIAL_SERVICE_REQUESTS 
 } from './data/mockData';
 import Login from './modules/auth/Login';
 import Sidebar from './components/layouts/Sidebar';
@@ -19,19 +18,19 @@ import HousekeepingManagement from './modules/housekeeping/HousekeepingManagemen
 import CustomerServiceManagement from './modules/customer-service/CustomerServiceManagement';
 import FoodBeverageManagement from './modules/food-beverage/FoodBeverageManagement';
 import ReportsManagement from './modules/reports/ReportsManagement';
-import SettingsManagement from './modules/settings/SettingsManagement';
+import MasterDataManagement from './modules/master/MasterDataManagement';
 
 export default function App() {
   // Authentication states (Defaults to Administrator for instant simulation load)
   const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [loggedInUser, setLoggedInUser] = useState<User | null>({
     nip: 'NIP-ADMIN',
-    name: 'Budi Santoso',
+    name: 'Administrator Utama',
     role: 'Administrator',
     pass: 'admin123'
   });
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'room' | 'guest' | 'reservation' | 'checkin' | 'checkout' | 'housekeeping' | 'cs' | 'fb' | 'reports' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'room' | 'guest' | 'reservation' | 'housekeeping' | 'cs' | 'fb' | 'reports' | 'master'>('dashboard');
   const [showProfileSlideOut, setShowProfileSlideOut] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -40,7 +39,6 @@ export default function App() {
   const [checkins, setCheckins] = useState<CheckInGuest[]>(INITIAL_CHECKINS);
   const [checkouts, setCheckouts] = useState<CheckOutGuest[]>(INITIAL_CHECKOUTS);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>(INITIAL_SERVICE_REQUESTS);
-  const [fbOrders, setFbOrders] = useState<FBOrder[]>(INITIAL_FB_ORDERS);
 
   // Live Clock Tick hook
   useEffect(() => {
@@ -49,6 +47,27 @@ export default function App() {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Redirect to dashboard if activeTab is not allowed for the logged in user's role
+  useEffect(() => {
+    const roleAllowedTabs: Record<string, string[]> = {
+      'Administrator': ['dashboard', 'room', 'guest', 'reservation', 'housekeeping', 'cs', 'fb', 'reports', 'master'],
+      'Hotel Manager': ['dashboard', 'room', 'guest', 'reservation', 'housekeeping', 'cs', 'fb', 'reports', 'master'],
+      'Front Office': ['dashboard', 'room', 'guest', 'reservation'],
+      'Front Office Supervisor': ['dashboard', 'room', 'guest', 'reservation'],
+      'Housekeeping': ['dashboard'],
+      'Housekeeping Supervisor': ['dashboard'],
+      'Customer Service': ['dashboard', 'cs'],
+      'Food & Beverage': ['dashboard', 'fb']
+    };
+    
+    if (loggedInUser) {
+      const allowed = roleAllowedTabs[loggedInUser.role] || ['dashboard'];
+      if (!allowed.includes(activeTab)) {
+        setActiveTab('dashboard');
+      }
+    }
+  }, [loggedInUser, activeTab]);
 
   // Authentication Handlers
   const handleLoginSuccess = (user: User) => {
@@ -74,15 +93,11 @@ export default function App() {
   };
 
   const handleCleanRoomAction = (roomNum: number) => {
-    setRooms(prev => prev.map(r => r.id === roomNum ? { ...r, status: 'available' } : r));
+    setRooms(prev => prev.map(r => r.id === roomNum ? { ...r, status: 'available', guestName: undefined } : r));
   };
 
   const handleResolveCSRequest = (id: number) => {
     setServiceRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'Resolved' } : r));
-  };
-
-  const handleDeliverFBOrder = (id: number) => {
-    setFbOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'Delivered' } : o));
   };
 
   // Helper Stats Calculations
@@ -126,6 +141,7 @@ export default function App() {
         <main className="p-6 flex-1 bg-[#F5F7FA]">
           {activeTab === 'dashboard' && (
             <Dashboard 
+              rooms={rooms}
               availableCount={availableCount}
               occupiedCount={occupiedCount}
               dirtyCount={dirtyCount}
@@ -138,6 +154,10 @@ export default function App() {
               serviceRequests={serviceRequests}
               handleCheckInAction={handleCheckInAction}
               handleCheckOutAction={handleCheckOutAction}
+              setActiveTab={setActiveTab}
+              userRole={loggedInUser?.role || 'Administrator'}
+              loggedInUser={loggedInUser}
+              handleCleanRoomAction={handleCleanRoomAction}
             />
           )}
 
@@ -151,9 +171,16 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'guest' && <GuestManagement />}
+          {activeTab === 'guest' && (
+            <GuestManagement userRole={loggedInUser?.role} />
+          )}
 
-          {activeTab === 'reservation' && <ReservationManagement setActiveTab={setActiveTab} />}
+          {activeTab === 'reservation' && (
+            <ReservationManagement 
+              setActiveTab={setActiveTab} 
+              userRole={loggedInUser?.role} 
+            />
+          )}
 
 
 
@@ -161,6 +188,7 @@ export default function App() {
             <HousekeepingManagement 
               rooms={rooms}
               handleCleanRoomAction={handleCleanRoomAction}
+              loggedInUser={loggedInUser}
             />
           )}
 
@@ -173,11 +201,7 @@ export default function App() {
           )}
 
           {activeTab === 'fb' && (
-            <FoodBeverageManagement 
-              fbOrders={fbOrders}
-              setFbOrders={setFbOrders}
-              handleDeliverFBOrder={handleDeliverFBOrder}
-            />
+            <FoodBeverageManagement />
           )}
 
           {activeTab === 'reports' && (
@@ -187,10 +211,8 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'settings' && (
-            <SettingsManagement 
-              onReset={() => setRooms(generateInitialRooms())}
-            />
+          {activeTab === 'master' && (
+            <MasterDataManagement />
           )}
         </main>
 

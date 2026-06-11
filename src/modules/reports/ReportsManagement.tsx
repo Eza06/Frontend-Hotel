@@ -17,7 +17,7 @@ export interface OperationalReport {
   id: string;
   name: string;
   code: string;
-  category: 'HOUSEKEEPING' | 'GUEST OPS' | 'RESERVATION' | 'SERVICE';
+  category: 'HOUSEKEEPING' | 'GUEST OPS' | 'RESERVATION' | 'SERVICE' | 'F&B';
   generatedBy: string;
   dateRange: string;
   status: 'VERIFIED' | 'PROCESSING' | 'NEEDS REVIEW';
@@ -70,11 +70,22 @@ export default function ReportsManagement({ rooms, serviceRequests }: ReportsPro
       status: 'NEEDS REVIEW',
       totalItems: 95,
       incidents: 8
+    },
+    {
+      id: 'REP-2026-005',
+      name: 'Food & Beverage Revenue Audit',
+      code: '#REP-2026-005',
+      category: 'F&B',
+      generatedBy: 'Nina S.',
+      dateRange: 'Oct 01 - Oct 25',
+      status: 'VERIFIED',
+      totalItems: 670,
+      incidents: 4
     }
   ]);
 
   const [selectedReportId, setSelectedReportId] = useState<string>('REP-2026-001');
-  const [activeCategoryTab, setActiveCategoryTab] = useState<'All' | 'HOUSEKEEPING' | 'GUEST OPS' | 'RESERVATION' | 'SERVICE'>('All');
+  const [activeCategoryTab, setActiveCategoryTab] = useState<'All' | 'HOUSEKEEPING' | 'GUEST OPS' | 'RESERVATION' | 'SERVICE' | 'F&B'>('All');
   const [dateRange, setDateRange] = useState('Oct 01, 2026 - Oct 31, 2026');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -176,18 +187,18 @@ export default function ReportsManagement({ rooms, serviceRequests }: ReportsPro
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-3xs">
-          <p className="text-[9px] font-bold text-gray-400 uppercase">Check-Ins</p>
+          <p className="text-[9px] font-bold text-gray-400 uppercase">F&B Revenue</p>
           <div className="flex justify-between items-end mt-1.5">
-            <h4 className="text-xl font-extrabold text-gray-800">56</h4>
-            <span className="text-[10px] text-red-500 font-bold font-sans">▼ 2%</span>
+            <h4 className="text-md font-black text-green-700">Rp 12.8M</h4>
+            <span className="text-[9px] text-green-600 font-bold font-sans">▲ 15%</span>
           </div>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-3xs">
-          <p className="text-[9px] font-bold text-gray-400 uppercase">Check-Outs</p>
+          <p className="text-[9px] font-bold text-gray-400 uppercase">F&B Sold Items</p>
           <div className="flex justify-between items-end mt-1.5">
-            <h4 className="text-xl font-extrabold text-gray-800">42</h4>
-            <span className="text-[10px] text-green-500 font-bold font-sans">▲ 5%</span>
+            <h4 className="text-xl font-extrabold text-gray-800">1,280</h4>
+            <span className="text-[9px] text-blue-500 font-bold font-sans">Menu</span>
           </div>
         </div>
 
@@ -218,7 +229,7 @@ export default function ReportsManagement({ rooms, serviceRequests }: ReportsPro
               
               {/* Category tabs */}
               <div className="flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg text-[10px]">
-                {(['All', 'RESERVATION', 'GUEST OPS', 'HOUSEKEEPING', 'SERVICE'] as const).map(cat => (
+                {(['All', 'RESERVATION', 'GUEST OPS', 'HOUSEKEEPING', 'SERVICE', 'F&B'] as const).map(cat => (
                   <button
                     key={cat}
                     onClick={() => setActiveCategoryTab(cat)}
@@ -226,7 +237,7 @@ export default function ReportsManagement({ rooms, serviceRequests }: ReportsPro
                       activeCategoryTab === cat ? 'bg-[#1E3A5F] text-white shadow-xs' : 'text-gray-500 hover:text-gray-800'
                     }`}
                   >
-                    {cat === 'All' ? 'All' : cat.replace(' OPS', '')}
+                    {cat === 'All' ? 'All' : cat}
                   </button>
                 ))}
               </div>
@@ -277,6 +288,7 @@ export default function ReportsManagement({ rooms, serviceRequests }: ReportsPro
                           rep.category === 'HOUSEKEEPING' ? 'bg-orange-50 text-orange-655 border-orange-200' :
                           rep.category === 'GUEST OPS' ? 'bg-purple-50 text-purple-655 border-purple-200' :
                           rep.category === 'RESERVATION' ? 'bg-blue-50 text-blue-655 border-blue-200' :
+                          rep.category === 'F&B' ? 'bg-green-50 text-green-755 border-green-200' :
                           'bg-yellow-50 text-yellow-655 border-yellow-200'
                         }`}>
                           {rep.category}
@@ -332,7 +344,7 @@ export default function ReportsManagement({ rooms, serviceRequests }: ReportsPro
         {/* RIGHT COLUMN: REPORT SIDEBAR */}
         <div className="lg:col-span-4 bg-white border border-gray-200 rounded-xl p-5 space-y-5 shadow-3xs text-left">
           <div className="border-b border-gray-200 pb-3">
-            <h3 className="text-xs font-black text-gray-450 uppercase tracking-wider">REPORT CONTEXT</h3>
+            <h3 className="text-xs font-black text-gray-455 uppercase tracking-wider">REPORT CONTEXT</h3>
           </div>
 
           {activeReport ? (
@@ -367,20 +379,24 @@ export default function ReportsManagement({ rooms, serviceRequests }: ReportsPro
                   <svg width="100" height="100" viewBox="0 0 36 36" className="mx-auto">
                     <circle cx="18" cy="18" r="15.915" fill="none" stroke="#F5F7FA" strokeWidth="3.5" />
                     
-                    {/* Bookings segment (Navy) - 40% */}
+                    {/* Bookings segment (Navy) - 30% */}
                     <circle cx="18" cy="18" r="15.915" fill="none" stroke="#1E3A5F" strokeWidth="3.6" 
-                            strokeDasharray="40 60" strokeDashoffset="100" />
+                            strokeDasharray="30 70" strokeDashoffset="100" />
                     
-                    {/* Guests Managed segment (Purple) - 25% */}
+                    {/* Guests Managed segment (Purple) - 20% */}
                     <circle cx="18" cy="18" r="15.915" fill="none" stroke="#8B5CF6" strokeWidth="3.6" 
-                            strokeDasharray="25 75" strokeDashoffset="60" />
+                            strokeDasharray="20 80" strokeDashoffset="70" />
                     
                     {/* Rooms Cleaned segment (Blue) - 20% */}
                     <circle cx="18" cy="18" r="15.915" fill="none" stroke="#3B82F6" strokeWidth="3.6" 
-                            strokeDasharray="20 80" strokeDashoffset="35" />
+                            strokeDasharray="20 80" strokeDashoffset="50" />
                     
                     {/* Service Requests segment (Orange) - 15% */}
                     <circle cx="18" cy="18" r="15.915" fill="none" stroke="#F59E0B" strokeWidth="3.6" 
+                            strokeDasharray="15 85" strokeDashoffset="30" />
+
+                    {/* F&B Sales segment (Green) - 15% */}
+                    <circle cx="18" cy="18" r="15.915" fill="none" stroke="#10B981" strokeWidth="3.6" 
                             strokeDasharray="15 85" strokeDashoffset="15" />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -407,6 +423,10 @@ export default function ReportsManagement({ rooms, serviceRequests }: ReportsPro
                     <span className="w-2.5 h-2.5 rounded-xs bg-[#F59E0B]" />
                     <span>Service Requests</span>
                   </div>
+                  <div className="flex items-center space-x-1.5 col-span-2">
+                    <span className="w-2.5 h-2.5 rounded-xs bg-[#10B981]" />
+                    <span>Food & Beverage Sales</span>
+                  </div>
                 </div>
               </div>
 
@@ -431,7 +451,7 @@ export default function ReportsManagement({ rooms, serviceRequests }: ReportsPro
               <div className="pt-2 border-t border-gray-150 flex flex-col gap-2">
                 <button
                   onClick={() => alert(`Membagikan laporan ${activeReport.name} ke departemen terkait!`)}
-                  className="w-full py-2 border border-gray-300 hover:bg-gray-50 text-gray-750 text-xs font-bold rounded-lg cursor-pointer transition-colors text-center shadow-3xs"
+                  className="w-full py-2 border border-gray-300 hover:bg-gray-50 text-gray-755 text-xs font-bold rounded-lg cursor-pointer transition-colors text-center shadow-3xs"
                 >
                   Share with Department
                 </button>

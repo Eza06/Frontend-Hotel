@@ -10,6 +10,7 @@ import { DataTable } from '../../components/tables/DataTable';
 
 interface ReservationManagementProps {
   setActiveTab: (tab: any) => void;
+  userRole?: string;
 }
 
 export interface ReservationItem {
@@ -220,7 +221,8 @@ export const INITIAL_RESERVATIONS: ReservationItem[] = [
   }
 ];
 
-export function ReservationManagement({ setActiveTab: _setActiveTab }: ReservationManagementProps) {
+export function ReservationManagement({ setActiveTab: _setActiveTab, userRole }: ReservationManagementProps) {
+  const isAdmin = userRole === 'Administrator' || userRole === 'Hotel Manager';
   const [reservations, setReservations] = useState<ReservationItem[]>(INITIAL_RESERVATIONS);
   const [selectedResCode, setSelectedResCode] = useState<string>('RES-10389');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -829,13 +831,23 @@ export function ReservationManagement({ setActiveTab: _setActiveTab }: Reservati
                   <span>Print Folio</span>
                 </button>
 
-                <button
-                  onClick={() => executeStatusChange(selectedRes.code, 'Cancelled')}
-                  disabled={selectedRes.status === 'Cancelled' || selectedRes.status === 'Checked Out'}
-                  className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-750 border border-red-200 font-bold rounded-lg text-xs flex items-center justify-center space-x-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <span>Cancel Res.</span>
-                </button>
+                {isAdmin ? (
+                  <button
+                    onClick={() => executeStatusChange(selectedRes.code, 'Cancelled')}
+                    disabled={selectedRes.status === 'Cancelled' || selectedRes.status === 'Checked Out'}
+                    className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-750 border border-red-200 font-bold rounded-lg text-xs flex items-center justify-center space-x-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <span>Cancel Res.</span>
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    title="Hanya Administrator yang dapat membatalkan reservasi"
+                    className="w-full py-2 bg-gray-50 text-gray-400 border border-gray-200 font-bold rounded-lg text-xs flex items-center justify-center space-x-1 cursor-not-allowed"
+                  >
+                    <span>Cancel Res. (Admin Only)</span>
+                  </button>
+                )}
               </div>
             </div>
 

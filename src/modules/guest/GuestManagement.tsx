@@ -162,7 +162,12 @@ export const INITIAL_GUEST_PROFILES: GuestProfile[] = [
   }
 ];
 
-export function GuestManagement() {
+interface GuestManagementProps {
+  userRole?: string;
+}
+
+export function GuestManagement({ userRole }: GuestManagementProps) {
+  const isAdmin = userRole === 'Administrator' || userRole === 'Hotel Manager';
   const [guests, setGuests] = useState<GuestProfile[]>(INITIAL_GUEST_PROFILES);
   const [selectedGuestId, setSelectedGuestId] = useState<string>('GST-00142');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -203,6 +208,14 @@ export function GuestManagement() {
     setSelectedGuestId(newId);
     setIsAddModalOpen(false);
     resetForm();
+  };
+
+  const handleDeleteGuest = (id: string) => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus profil tamu ini secara permanen?')) {
+      setGuests(prev => prev.filter(g => g.id !== id));
+      setSelectedGuestId('');
+      alert('Profil tamu berhasil dihapus dari sistem!');
+    }
   };
 
   const handleEditGuest = (e: React.FormEvent) => {
@@ -592,16 +605,44 @@ export function GuestManagement() {
                 </button>
               </div>
 
-              <button
-                onClick={() => toggleBlacklist(selectedGuest.id)}
-                className={`w-full py-2 font-bold rounded-lg text-xs tracking-wide transition-all cursor-pointer border text-center ${
-                  selectedGuest.status === 'Blacklisted'
-                    ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
-                    : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
-                }`}
-              >
-                {selectedGuest.status === 'Blacklisted' ? '✓ Remove from Blacklist' : '⚠ Blacklist Guest'}
-              </button>
+              {isAdmin ? (
+                <div className="space-y-2">
+                  <button
+                    onClick={() => toggleBlacklist(selectedGuest.id)}
+                    className={`w-full py-2 font-bold rounded-lg text-xs tracking-wide transition-all cursor-pointer border text-center ${
+                      selectedGuest.status === 'Blacklisted'
+                        ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
+                        : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
+                    }`}
+                  >
+                    {selectedGuest.status === 'Blacklisted' ? '✓ Remove from Blacklist' : '⚠ Blacklist Guest'}
+                  </button>
+                  
+                  <button
+                    onClick={() => handleDeleteGuest(selectedGuest.id)}
+                    className="w-full py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-750 font-bold rounded-lg text-xs tracking-wide transition-all cursor-pointer text-center"
+                  >
+                    🗑 Hapus Profil Tamu
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <button
+                    disabled
+                    title="Hanya Administrator yang dapat mem-blacklist tamu"
+                    className="w-full py-2 bg-gray-50 border border-gray-200 text-gray-400 font-bold rounded-lg text-xs tracking-wide cursor-not-allowed text-center"
+                  >
+                    ⚠ Blacklist Guest (Admin Only)
+                  </button>
+                  <button
+                    disabled
+                    title="Hanya Administrator yang dapat menghapus profil tamu"
+                    className="w-full py-2 bg-gray-50 border border-gray-200 text-gray-400 font-bold rounded-lg text-xs tracking-wide cursor-not-allowed text-center"
+                  >
+                    🗑 Hapus Profil Tamu (Admin Only)
+                  </button>
+                </div>
+              )}
             </div>
 
           </div>
