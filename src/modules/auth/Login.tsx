@@ -16,7 +16,8 @@ export const DEMO_ACCOUNTS: User[] = [
   { nip: 'NIP-ADMIN', name: 'Budi Santoso', role: 'Administrator', pass: 'admin123' },
   { nip: 'NIP-FO', name: 'Siti Rahma', role: 'Front Office Supervisor', pass: 'fo123' },
   { nip: 'NIP-MGR', name: 'Hendra Wijaya', role: 'Hotel Manager', pass: 'mgr123' },
-  { nip: 'NIP-HK', name: 'Agus Saputra', role: 'Housekeeping Supervisor', pass: 'hk123' }
+  { nip: 'NIP-HK', name: 'Agus Saputra', role: 'Housekeeping Supervisor', pass: 'hk123' },
+  { nip: 'NIP-CS', name: 'Rina Lestari', role: 'Customer Service', pass: 'cs123' }
 ];
 
 interface LoginProps {

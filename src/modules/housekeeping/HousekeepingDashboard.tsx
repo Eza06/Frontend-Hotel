@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Play, 
   Square, 
@@ -11,13 +11,17 @@ import {
   Layers, 
   HelpCircle
 } from 'lucide-react';
-import type { Room, User } from '../../types';
+import type { Room, User, Housekeeper, CleaningHistoryItem } from '../../types';
 
 interface HousekeepingDashboardProps {
   rooms: Room[];
   handleCleanRoomAction: (roomNum: number) => void;
   loggedInUser: User | null;
   setActiveTab: (tab: any) => void;
+  staffList: Housekeeper[];
+  setStaffList: React.Dispatch<React.SetStateAction<Housekeeper[]>>;
+  cleaningHistory: CleaningHistoryItem[];
+  setCleaningHistory: React.Dispatch<React.SetStateAction<CleaningHistoryItem[]>>;
 }
 
 export interface HousekeepingTask {
@@ -44,9 +48,13 @@ export interface MaintenanceReportItem {
 }
 
 export default function HousekeepingDashboard({ 
-  rooms: _rooms, 
+  rooms, 
   handleCleanRoomAction, 
-  loggedInUser 
+  loggedInUser,
+  staffList,
+  setStaffList,
+  cleaningHistory: _cleaningHistory,
+  setCleaningHistory
 }: HousekeepingDashboardProps) {
   
   const staffName = loggedInUser?.name || 'Agus Saputra';
@@ -60,6 +68,57 @@ export default function HousekeepingDashboard({
 
   // 1. Shift working session state
   const [isWorking, setIsWorking] = useState<boolean>(false);
+
+  // Synchronization with Admin-assigned rooms
+  useEffect(() => {
+    const myStaffMember = staffList.find(s => s.name === staffName);
+    if (!myStaffMember) return;
+
+    setIsWorking(myStaffMember.status === 'Working');
+
+    const myAssignedRoomNumbers = myStaffMember.assignedRooms;
+
+    setTasks(prevTasks => {
+      // Keep completed tasks
+      const completedTasks = prevTasks.filter(t => t.status === 'Completed');
+      
+      // Keep or add rooms in myAssignedRoomNumbers
+      const activeTasks: HousekeepingTask[] = [];
+
+      myAssignedRoomNumbers.forEach(roomNum => {
+        // Check if room is already in prevTasks
+        const existingTask = prevTasks.find(t => t.roomNumber === roomNum);
+        if (existingTask) {
+          activeTasks.push(existingTask);
+        } else {
+          const roomObj = rooms.find(r => r.id.toString() === roomNum);
+          activeTasks.push({
+            roomNumber: roomNum,
+            roomType: roomObj ? `${roomObj.type} Room` : 'Standard Room',
+            floor: roomObj ? roomObj.floor.toString() : '1',
+            status: 'Assigned',
+            lastUpdated: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+            assignmentTime: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+            guestName: roomObj?.guestName || 'Tamu Hotel',
+            checkoutDate: '12 Juni 2026',
+            specialRequests: 'Tidak ada permintaan khusus.',
+            cleaningNotes: '',
+            maintenanceNotes: ''
+          });
+        }
+      });
+
+      return [...completedTasks, ...activeTasks];
+    });
+  }, [staffList, rooms, staffName]);
+
+  const handleStartWorking = () => {
+    setStaffList(prev => prev.map(s => s.name === staffName ? { ...s, status: 'Working' } : s));
+  };
+
+  const handleStopWorking = () => {
+    setStaffList(prev => prev.map(s => s.name === staffName ? { ...s, status: 'Offline', assignedRooms: [] } : s));
+  };
 
   // 2. Personal Housekeeping tasks list state
   const [tasks, setTasks] = useState<HousekeepingTask[]>([
@@ -175,6 +234,35 @@ export default function HousekeepingDashboard({
         
         // Notify parent state to change room status to 'available'
         handleCleanRoomAction(parseInt(roomNum));
+
+        // Remove room from assignedRooms in global staffList
+        setStaffList(prevStaff => prevStaff.map(s => {
+          if (s.name === staffName) {
+            return { ...s, assignedRooms: s.assignedRooms.filter(r => r !== roomNum) };
+          }
+          return s;
+        }));
+
+        // Add record to global cleaningHistory
+        const now = new Date();
+        const endTimeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        const startMinutes = now.getMinutes() - 20;
+        const startHour = now.getHours() - (startMinutes < 0 ? 1 : 0);
+        const correctedMinutes = (startMinutes + 60) % 60;
+        const startTimeStr = `${startHour.toString().padStart(2, '0')}:${correctedMinutes.toString().padStart(2, '0')}`;
+        
+        const newHistoryItem: CleaningHistoryItem = {
+          id: `CL-${Math.floor(904 + Math.random() * 99)}`,
+          roomNum: roomNum,
+          roomType: rooms.find(r => r.id.toString() === roomNum)?.type || 'Standard',
+          housekeeperName: staffName,
+          startTime: startTimeStr,
+          endTime: endTimeStr,
+          duration: '20 menit',
+          status: 'Completed'
+        };
+        
+        setCleaningHistory(prevHistory => [newHistoryItem, ...prevHistory]);
 
         return {
           ...t,
@@ -292,7 +380,7 @@ export default function HousekeepingDashboard({
           <div>
             {!isWorking ? (
               <button
-                onClick={() => setIsWorking(true)}
+                onClick={handleStartWorking}
                 className="w-full md:w-auto px-5 py-3 bg-[#22C55E] hover:bg-green-600 text-white text-xs font-black rounded-xl flex items-center justify-center space-x-2 shadow-sm cursor-pointer transition-all active:scale-97"
               >
                 <Play className="w-4 h-4 fill-white" />
@@ -300,7 +388,7 @@ export default function HousekeepingDashboard({
               </button>
             ) : (
               <button
-                onClick={() => setIsWorking(false)}
+                onClick={handleStopWorking}
                 className="w-full md:w-auto px-5 py-3 bg-red-600 hover:bg-red-700 text-white text-xs font-black rounded-xl flex items-center justify-center space-x-2 shadow-sm cursor-pointer transition-all active:scale-97"
               >
                 <Square className="w-4 h-4 fill-white" />

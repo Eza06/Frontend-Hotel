@@ -17,8 +17,9 @@ import {
   ChevronRight,
   ClipboardList
 } from 'lucide-react';
-import type { Room, CheckInGuest, CheckOutGuest, ServiceRequest, User as UserType } from '../../types';
+import type { Room, CheckInGuest, CheckOutGuest, ServiceRequest, User as UserType, Housekeeper, CleaningHistoryItem } from '../../types';
 import HousekeepingDashboard from '../housekeeping/HousekeepingDashboard';
+import CustomerServiceDashboard from '../customer-service/CustomerServiceDashboard';
 
 interface DashboardProps {
   rooms: Room[];
@@ -38,6 +39,12 @@ interface DashboardProps {
   userRole: string;
   loggedInUser?: UserType | null;
   handleCleanRoomAction: (roomNum: number) => void;
+  handleResolveCSRequest: (id: number) => void;
+  setServiceRequests: React.Dispatch<React.SetStateAction<ServiceRequest[]>>;
+  staffList: Housekeeper[];
+  setStaffList: React.Dispatch<React.SetStateAction<Housekeeper[]>>;
+  cleaningHistory: CleaningHistoryItem[];
+  setCleaningHistory: React.Dispatch<React.SetStateAction<CleaningHistoryItem[]>>;
 }
 
 export default function Dashboard({
@@ -57,7 +64,13 @@ export default function Dashboard({
   setActiveTab,
   userRole,
   loggedInUser,
-  handleCleanRoomAction
+  handleCleanRoomAction,
+  handleResolveCSRequest,
+  setServiceRequests,
+  staffList,
+  setStaffList,
+  cleaningHistory,
+  setCleaningHistory
 }: DashboardProps) {
   
   // Interactive Room States (used in Front Office view)
@@ -157,6 +170,25 @@ export default function Dashboard({
       <HousekeepingDashboard 
         rooms={rooms}
         handleCleanRoomAction={handleCleanRoomAction}
+        loggedInUser={loggedInUser || null}
+        setActiveTab={setActiveTab}
+        staffList={staffList}
+        setStaffList={setStaffList}
+        cleaningHistory={cleaningHistory}
+        setCleaningHistory={setCleaningHistory}
+      />
+    );
+  }
+
+  // ==========================================
+  // VIEW RENDERER 4: CUSTOMER SERVICE DASHBOARD
+  // ==========================================
+  if (userRole === 'Customer Service') {
+    return (
+      <CustomerServiceDashboard 
+        serviceRequests={serviceRequests}
+        handleResolveCSRequest={handleResolveCSRequest}
+        setServiceRequests={setServiceRequests}
         loggedInUser={loggedInUser || null}
         setActiveTab={setActiveTab}
       />

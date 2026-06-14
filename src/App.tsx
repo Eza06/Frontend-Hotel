@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { User, Room, CheckInGuest, CheckOutGuest, ServiceRequest } from './types';
+import type { User, Room, CheckInGuest, CheckOutGuest, ServiceRequest, Housekeeper, CleaningHistoryItem } from './types';
 import { 
   generateInitialRooms, 
   INITIAL_CHECKINS, 
@@ -39,6 +39,20 @@ export default function App() {
   const [checkins, setCheckins] = useState<CheckInGuest[]>(INITIAL_CHECKINS);
   const [checkouts, setCheckouts] = useState<CheckOutGuest[]>(INITIAL_CHECKOUTS);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>(INITIAL_SERVICE_REQUESTS);
+
+  // Lifted Housekeeping States for synchronization
+  const [staffList, setStaffList] = useState<Housekeeper[]>([
+    { id: 'HK-01', name: 'Tom Reeves', status: 'Working', assignedRooms: ['101', '102'] },
+    { id: 'HK-02', name: 'Sarah Connor', status: 'Working', assignedRooms: ['204'] },
+    { id: 'HK-03', name: 'Mike Jenkins', status: 'Offline', assignedRooms: [] },
+    { id: 'HK-04', name: 'Agus Saputra', status: 'Offline', assignedRooms: [] },
+  ]);
+
+  const [cleaningHistory, setCleaningHistory] = useState<CleaningHistoryItem[]>([
+    { id: 'CL-901', roomNum: '103', roomType: 'Standard Room', housekeeperName: 'Tom Reeves', startTime: '08:15', endTime: '08:35', duration: '20 menit', status: 'Completed' },
+    { id: 'CL-902', roomNum: '202', roomType: 'Deluxe Room', housekeeperName: 'Sarah Connor', startTime: '09:00', endTime: '09:25', duration: '25 menit', status: 'Completed' },
+    { id: 'CL-903', roomNum: '305', roomType: 'Suite Room', housekeeperName: 'Mike Jenkins', startTime: '10:10', endTime: '10:45', duration: '35 menit', status: 'Completed' },
+  ]);
 
   // Live Clock Tick hook
   useEffect(() => {
@@ -158,6 +172,12 @@ export default function App() {
               userRole={loggedInUser?.role || 'Administrator'}
               loggedInUser={loggedInUser}
               handleCleanRoomAction={handleCleanRoomAction}
+              handleResolveCSRequest={handleResolveCSRequest}
+              setServiceRequests={setServiceRequests}
+              staffList={staffList}
+              setStaffList={setStaffList}
+              cleaningHistory={cleaningHistory}
+              setCleaningHistory={setCleaningHistory}
             />
           )}
 
@@ -188,7 +208,11 @@ export default function App() {
             <HousekeepingManagement 
               rooms={rooms}
               handleCleanRoomAction={handleCleanRoomAction}
-              loggedInUser={loggedInUser}
+              loggedInUser={loggedInUser || undefined}
+              staffList={staffList}
+              setStaffList={setStaffList}
+              historyList={cleaningHistory}
+              setHistoryList={setCleaningHistory}
             />
           )}
 

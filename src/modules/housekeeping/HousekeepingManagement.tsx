@@ -6,119 +6,47 @@ import {
   Clock, 
   Users, 
   Check, 
-  Play, 
-  Square, 
   History, 
   RotateCcw,
   Sparkles,
   CheckCircle2
 } from 'lucide-react';
-import type { Room, User } from '../../types';
+import type { Room, User, Housekeeper, CleaningHistoryItem } from '../../types';
 
 interface HousekeepingProps {
   rooms: Room[];
   handleCleanRoomAction: (roomNum: number) => void;
   loggedInUser?: User;
+  staffList: Housekeeper[];
+  setStaffList: React.Dispatch<React.SetStateAction<Housekeeper[]>>;
+  historyList: CleaningHistoryItem[];
+  setHistoryList: React.Dispatch<React.SetStateAction<CleaningHistoryItem[]>>;
 }
 
-export interface Housekeeper {
-  id: string;
-  name: string;
-  status: 'Working' | 'Offline';
-  assignedRooms: string[];
-}
-
-export interface CleaningHistoryItem {
-  id: string;
-  roomNum: string;
-  roomType: string;
-  housekeeperName: string;
-  startTime: string;
-  endTime: string;
-  duration: string;
-  status: 'Completed';
-}
-
-const INITIAL_HISTORY: CleaningHistoryItem[] = [
-  { id: 'CL-901', roomNum: '103', roomType: 'Standard Room', housekeeperName: 'Tom Reeves', startTime: '08:15', endTime: '08:35', duration: '20 menit', status: 'Completed' },
-  { id: 'CL-902', roomNum: '202', roomType: 'Deluxe Room', housekeeperName: 'Sarah Connor', startTime: '09:00', endTime: '09:25', duration: '25 menit', status: 'Completed' },
-  { id: 'CL-903', roomNum: '305', roomType: 'Suite Room', housekeeperName: 'Mike Jenkins', startTime: '10:10', endTime: '10:45', duration: '35 menit', status: 'Completed' },
-];
-
-export default function HousekeepingManagement({ rooms, handleCleanRoomAction, loggedInUser }: HousekeepingProps) {
+export default function HousekeepingManagement({ 
+  rooms, 
+  handleCleanRoomAction, 
+  loggedInUser,
+  staffList,
+  setStaffList,
+  historyList,
+  setHistoryList
+}: HousekeepingProps) {
   const dirtyRooms = rooms.filter(r => r.status === 'dirty');
-  const currentHKName = loggedInUser?.name || 'Agus Saputra';
-  const currentHKId = 'HK-04';
-
-  // State for Housekeepers list
-  const [staffList, setStaffList] = useState<Housekeeper[]>([
-    { id: 'HK-01', name: 'Tom Reeves', status: 'Working', assignedRooms: ['101', '102'] },
-    { id: 'HK-02', name: 'Sarah Connor', status: 'Working', assignedRooms: ['204'] },
-    { id: 'HK-03', name: 'Mike Jenkins', status: 'Offline', assignedRooms: [] },
-    { id: 'HK-04', name: currentHKName, status: 'Offline', assignedRooms: [] },
-  ]);
-
-  // Working state for the currently logged in housekeeper (Agus Saputra / loggedInUser)
-  const [isWorking, setIsWorking] = useState<boolean>(false);
-  
-  // Cleaning History State
-  const [historyList, setHistoryList] = useState<CleaningHistoryItem[]>(INITIAL_HISTORY);
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [roomTypeFilter, setRoomTypeFilter] = useState<string>('All');
   const [assignmentFilter, setAssignmentFilter] = useState<string>('All');
 
-  // Start Working Handler
-  const handleStartWorking = () => {
-    setIsWorking(true);
-    setStaffList(prev => prev.map(stf => {
-      if (stf.id === currentHKId) {
-        return { ...stf, status: 'Working' };
-      }
-      return stf;
-    }));
-    
-    // Prompt to auto-distribute dirty rooms immediately
-    if (dirtyRooms.length > 0) {
-      const shouldDistribute = window.confirm(
-        'Status Anda sekarang: AKTIF BEKERJA.\n\nApakah Anda ingin membagi rata antrean kamar kotor secara merata ke seluruh staf aktif sekarang?'
-      );
-      if (shouldDistribute) {
-        distributeRoomsHelper(true);
-      }
-    }
-  };
-
-  // Stop Working Handler
-  const handleStopWorking = () => {
-    setIsWorking(false);
-    setStaffList(prev => prev.map(stf => {
-      if (stf.id === currentHKId) {
-        // Remove Agus from working status and empty his assigned rooms
-        return { ...stf, status: 'Offline', assignedRooms: [] };
-      }
-      return stf;
-    }));
-    alert('Status Anda sekarang: OFFLINE. Tugas pembersihan Anda telah dikembalikan ke antrean.');
-  };
-
-  // Re-distribute helper that takes into account current logged in user status
-  const distributeRoomsHelper = (forceCurrentUserWorking: boolean) => {
+  // Re-distribute helper
+  const distributeRoomsHelper = () => {
     setStaffList(prev => {
-      // Calculate active staff list using the updated status
-      const updatedStaff = prev.map(stf => {
-        if (stf.id === currentHKId) {
-          return { ...stf, status: forceCurrentUserWorking ? 'Working' : stf.status };
-        }
-        return stf;
-      });
-
-      const activeStaff = updatedStaff.filter(s => s.status === 'Working');
+      const activeStaff = prev.filter(s => s.status === 'Working');
       if (activeStaff.length === 0) return prev;
 
       // Reset all assignments for active staff to distribute fresh
-      const resetStaff = updatedStaff.map(s => ({
+      const resetStaff = prev.map(s => ({
         ...s,
         assignedRooms: [] as string[]
       }));
@@ -145,17 +73,15 @@ export default function HousekeepingManagement({ rooms, handleCleanRoomAction, l
       return;
     }
 
-    distributeRoomsHelper(isWorking);
+    distributeRoomsHelper();
     alert(`Pembagian beban kerja berhasil! ${dirtyRooms.length} kamar kotor dibagi rata ke ${activeStaffCount} staf aktif.`);
   };
 
   // Clean room handler: clean the room, remove from assignment, and add to history
   const onCleanRoom = (roomId: number, roomType: string) => {
     // Determine which staff member cleaned the room
-    const assignedStaff = staffList.find(stf => stf.assignedRooms.includes(roomId.toString())) || 
-                          staffList.find(stf => stf.id === currentHKId);
-    
-    const staffName = assignedStaff ? assignedStaff.name : currentHKName;
+    const assignedStaff = staffList.find(stf => stf.assignedRooms.includes(roomId.toString()));
+    const staffName = assignedStaff ? assignedStaff.name : 'Staf Housekeeping';
 
     // Call global app state handler
     handleCleanRoomAction(roomId);
@@ -247,50 +173,28 @@ export default function HousekeepingManagement({ rooms, handleCleanRoomAction, l
   return (
     <div className="space-y-6 text-left">
       
-      {/* HOUSEKEEPER PERSONAL DUTY BOARD */}
+      {/* SUPERVISOR CONTROL PANEL */}
       <div className="p-6 bg-gradient-to-r from-[#1E3A5F] to-[#1E3A5F]/90 rounded-2xl text-white shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-1">
           <div className="flex items-center space-x-2">
             <span className="px-2 py-0.5 bg-sky-500/30 text-sky-200 border border-sky-400/40 rounded text-[10px] font-bold tracking-wider uppercase">
               {loggedInUser?.role || 'Housekeeping Supervisor'}
             </span>
-            <span className={`w-2 h-2 rounded-full ${isWorking ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`} />
           </div>
-          <h2 className="text-xl font-black">{currentHKName} Command Dashboard</h2>
+          <h2 className="text-xl font-black">Housekeeping Command Panel</h2>
           <p className="text-xs text-blue-200">
-            {isWorking 
-              ? `Status: Aktif Bekerja • Ditugaskan menangani ${staffList.find(s => s.id === currentHKId)?.assignedRooms.length || 0} kamar kotor.` 
-              : 'Status: Offline • Silakan tekan tombol Start Working untuk mulai menerima tugas pembersihan.'}
+            Gunakan tombol di samping untuk membagi antrean kamar kotor secara merata ke seluruh staf aktif yang sedang shift kerja.
           </p>
         </div>
 
-        {/* Start / Stop Working Controls */}
-        <div className="flex items-center space-x-3 w-full md:w-auto">
-          {!isWorking ? (
-            <button
-              onClick={handleStartWorking}
-              className="flex-1 md:flex-initial px-5 py-3 bg-[#22C55E] hover:bg-green-600 text-white font-extrabold rounded-xl text-xs flex items-center justify-center space-x-2 shadow-md hover:shadow-lg cursor-pointer transition-all active:scale-95"
-            >
-              <Play className="w-4 h-4 fill-white" />
-              <span>START WORKING</span>
-            </button>
-          ) : (
-            <button
-              onClick={handleStopWorking}
-              className="flex-1 md:flex-initial px-5 py-3 bg-red-600 hover:bg-red-700 text-white font-extrabold rounded-xl text-xs flex items-center justify-center space-x-2 shadow-md hover:shadow-lg cursor-pointer transition-all active:scale-95"
-            >
-              <Square className="w-4 h-4 fill-white" />
-              <span>STOP WORKING</span>
-            </button>
-          )}
-
+        <div>
           <button
             onClick={handleEvenDistribution}
-            className="flex-1 md:flex-initial px-5 py-3 bg-blue-500 hover:bg-blue-650 text-white font-extrabold rounded-xl text-xs flex items-center justify-center space-x-2 shadow-md hover:shadow-lg cursor-pointer transition-all active:scale-95"
+            className="w-full md:w-auto px-5 py-3.5 bg-blue-500 hover:bg-blue-600 text-white font-extrabold rounded-xl text-xs flex items-center justify-center space-x-2 shadow-md hover:shadow-lg cursor-pointer transition-all active:scale-97"
             title="Bagi rata antrean kamar kotor ke seluruh staf aktif"
           >
-            <RotateCcw className="w-4 h-4" />
-            <span>BAGI RATA TUGAS</span>
+            <RotateCcw className="w-4.5 h-4.5" />
+            <span>BAGI RATA TUGAS PEMBERSIHAN</span>
           </button>
         </div>
       </div>
@@ -319,15 +223,15 @@ export default function HousekeepingManagement({ rooms, handleCleanRoomAction, l
           </div>
         </div>
 
-        {/* My Assigned Rooms */}
+        {/* Vacant Clean Card */}
         <div className="p-4 rounded-xl border border-gray-250 bg-white flex items-center justify-between shadow-3xs">
           <div>
-            <p className="text-[10px] font-bold text-purple-500 uppercase tracking-wider">Tugas Saya hari ini</p>
-            <h3 className="text-2xl font-black text-purple-750 mt-1">
-              {(staffList.find(s => s.id === currentHKId)?.assignedRooms.length || 0)}
+            <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Kamar Bersih (Available)</p>
+            <h3 className="text-2xl font-black text-emerald-600 mt-1">
+              {rooms.filter(r => r.status === 'available').length}
             </h3>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
+          <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
             <Sparkles className="w-5 h-5" />
           </div>
         </div>
@@ -396,24 +300,16 @@ export default function HousekeepingManagement({ rooms, handleCleanRoomAction, l
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {filteredDirtyRooms.map(room => {
               const assignedStaffId = getAssignedStaffIdForRoom(room.id);
-              const isAssignedToMe = assignedStaffId === currentHKId;
               
               return (
                 <div 
                   key={room.id} 
-                  className={`p-4 rounded-xl border flex flex-col justify-between space-y-3 transition-all ${
-                    isAssignedToMe 
-                      ? 'border-purple-200 bg-purple-50/15 shadow-sm ring-1 ring-purple-100'
-                      : 'border-orange-200 bg-orange-50/10'
-                  }`}
+                  className="p-4 rounded-xl border flex flex-col justify-between space-y-3 transition-all border-orange-200 bg-orange-50/10"
                 >
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="flex items-center space-x-1.5">
                         <p className="text-sm font-extrabold text-[#1E3A5F]">Kamar {room.id}</p>
-                        {isAssignedToMe && (
-                          <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 text-[8px] font-black rounded tracking-wider">TUGAS SAYA</span>
-                        )}
                       </div>
                       <p className="text-[10px] text-gray-500 font-bold uppercase mt-0.5">{room.type}</p>
                     </div>
@@ -475,26 +371,19 @@ export default function HousekeepingManagement({ rooms, handleCleanRoomAction, l
 
             <div className="space-y-3">
               {staffList.map(stf => {
-                const isMe = stf.id === currentHKId;
                 return (
                   <div 
                     key={stf.id} 
-                    className={`p-3 border rounded-xl space-y-2 shadow-3xs transition-all ${
-                      isMe 
-                        ? 'border-purple-200 bg-purple-50/10' 
-                        : 'border-gray-200 bg-white'
-                    }`}
+                    className="p-3 border border-gray-200 bg-white rounded-xl space-y-2 shadow-3xs transition-all"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-extrabold text-white ${
-                          isMe ? 'bg-purple-700' : 'bg-[#1E3A5F]'
-                        }`}>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-extrabold text-white bg-[#1E3A5F]">
                           {stf.name.charAt(0)}
                         </div>
                         <div>
                           <p className="text-xs font-extrabold text-gray-800">
-                            {stf.name} {isMe && '(Anda)'}
+                            {stf.name}
                           </p>
                           <p className="text-[9px] text-gray-400 font-semibold">{stf.id}</p>
                         </div>

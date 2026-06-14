@@ -82,3 +82,21 @@ export interface OperationalReport {
   totalItems: number;
   incidents: number;
 }
+
+export interface Housekeeper {
+  id: string;
+  name: string;
+  status: 'Working' | 'Offline';
+  assignedRooms: string[];
+}
+
+export interface CleaningHistoryItem {
+  id: string;
+  roomNum: string;
+  roomType: string;
+  housekeeperName: string;
+  startTime: string;
+  endTime: string;
+  duration: string;
+  status: 'Completed';
+}
