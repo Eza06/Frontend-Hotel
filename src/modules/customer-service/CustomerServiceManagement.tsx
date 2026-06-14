@@ -47,8 +47,6 @@ export default function CustomerServiceManagement({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'On Progress' | 'Resolved'>('All');
-  const [priorityFilter, setPriorityFilter] = useState<'All' | 'Critical' | 'Medium' | 'Low'>('All');
-
   const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false);
   const [newRoomNum, setNewRoomNum] = useState('');
   const [newItem, setNewItem] = useState('');
@@ -143,14 +141,6 @@ export default function CustomerServiceManagement({
     }
   };
 
-  const handleAssignToStaff = (ticketId: number) => {
-    setServiceRequests(prev => prev.map(req => {
-      if (req.id === ticketId) {
-        return { ...req, status: 'On Progress' };
-      }
-      return req;
-    }));
-  };
 
   const handleEvenDistribution = () => {
     const activeCS = csStaffList.filter(s => s.status === 'Working');

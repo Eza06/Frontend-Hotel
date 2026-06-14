@@ -44,6 +44,8 @@ export interface ServiceRequest {
   code?: string;
   guestName?: string;
   createdTime?: string;
+  assignedTime?: string;
+  resolvedTime?: string;
 }
 
 export interface FBOrder {
