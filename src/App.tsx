@@ -16,7 +16,8 @@ import { GuestManagement } from './modules/guest/GuestManagement';
 import { ReservationManagement } from './modules/reservation/ReservationManagement';
 import HousekeepingManagement from './modules/housekeeping/HousekeepingManagement';
 import CustomerServiceManagement from './modules/customer-service/CustomerServiceManagement';
-import FoodBeverageManagement from './modules/food-beverage/FoodBeverageManagement';
+import FoodBeverageManagement, { INITIAL_TRANSACTIONS } from './modules/food-beverage/FoodBeverageManagement';
+import type { FBTransaction } from './modules/food-beverage/FoodBeverageManagement';
 import ReportsManagement from './modules/reports/ReportsManagement';
 import MasterDataManagement from './modules/master/MasterDataManagement';
 
@@ -60,6 +61,8 @@ export default function App() {
     { id: 'CL-902', roomNum: '202', roomType: 'Deluxe Room', housekeeperName: 'Sarah Connor', startTime: '09:00', endTime: '09:25', duration: '25 menit', status: 'Completed' },
     { id: 'CL-903', roomNum: '305', roomType: 'Suite Room', housekeeperName: 'Mike Jenkins', startTime: '10:10', endTime: '10:45', duration: '35 menit', status: 'Completed' },
   ]);
+
+  const [fbTransactions, setFbTransactions] = useState<FBTransaction[]>(INITIAL_TRANSACTIONS);
 
   // Live Clock Tick hook
   useEffect(() => {
@@ -187,6 +190,8 @@ export default function App() {
               setCleaningHistory={setCleaningHistory}
               csStaffList={csStaffList}
               setCsStaffList={setCsStaffList}
+              transactions={fbTransactions}
+              setTransactions={setFbTransactions}
             />
           )}
 
@@ -236,7 +241,13 @@ export default function App() {
           )}
 
           {activeTab === 'fb' && (
-            <FoodBeverageManagement />
+            <FoodBeverageManagement 
+              transactions={fbTransactions}
+              setTransactions={setFbTransactions}
+              loggedInUser={loggedInUser}
+              serviceRequests={serviceRequests}
+              setServiceRequests={setServiceRequests}
+            />
           )}
 
           {activeTab === 'reports' && (

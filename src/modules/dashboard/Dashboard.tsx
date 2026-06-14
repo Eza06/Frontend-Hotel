@@ -20,6 +20,8 @@ import {
 import type { Room, CheckInGuest, CheckOutGuest, ServiceRequest, User as UserType, Housekeeper, CleaningHistoryItem, CSStaff } from '../../types';
 import HousekeepingDashboard from '../housekeeping/HousekeepingDashboard';
 import CustomerServiceDashboard from '../customer-service/CustomerServiceDashboard';
+import CafeDashboard from '../food-beverage/CafeDashboard';
+import type { FBTransaction } from '../food-beverage/FoodBeverageManagement';
 
 interface DashboardProps {
   rooms: Room[];
@@ -47,6 +49,8 @@ interface DashboardProps {
   setCleaningHistory: React.Dispatch<React.SetStateAction<CleaningHistoryItem[]>>;
   csStaffList: CSStaff[];
   setCsStaffList: React.Dispatch<React.SetStateAction<CSStaff[]>>;
+  transactions: FBTransaction[];
+  setTransactions: React.Dispatch<React.SetStateAction<FBTransaction[]>>;
 }
 
 export default function Dashboard({
@@ -74,7 +78,9 @@ export default function Dashboard({
   cleaningHistory,
   setCleaningHistory,
   csStaffList,
-  setCsStaffList
+  setCsStaffList,
+  transactions,
+  setTransactions
 }: DashboardProps) {
   
   // Interactive Room States (used in Front Office view)
@@ -197,6 +203,22 @@ export default function Dashboard({
         setActiveTab={setActiveTab}
         csStaffList={csStaffList}
         setCsStaffList={setCsStaffList}
+      />
+    );
+  }
+
+  // ==========================================
+  // VIEW RENDERER 5: CAFE DASHBOARD
+  // ==========================================
+  if (userRole === 'Food & Beverage') {
+    return (
+      <CafeDashboard 
+        transactions={transactions}
+        setTransactions={setTransactions}
+        serviceRequests={serviceRequests}
+        setServiceRequests={setServiceRequests}
+        setActiveTab={setActiveTab}
+        loggedInUser={loggedInUser}
       />
     );
   }

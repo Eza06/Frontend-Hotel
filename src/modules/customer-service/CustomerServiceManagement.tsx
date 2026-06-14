@@ -48,7 +48,9 @@ export default function CustomerServiceManagement({
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'On Progress' | 'Resolved'>('All');
   const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false);
+  const [newLocationType, setNewLocationType] = useState<'Hotel' | 'Cafe'>('Hotel');
   const [newRoomNum, setNewRoomNum] = useState('');
+  const [newTableNum, setNewTableNum] = useState('');
   const [newItem, setNewItem] = useState('');
   const [newPriority, setNewPriority] = useState<'Critical' | 'Medium' | 'Low'>('Medium');
 
@@ -117,26 +119,32 @@ export default function CustomerServiceManagement({
 
   const handleCreateTicket = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newRoomNum && newItem) {
+    const isHotel = newLocationType === 'Hotel';
+    if ((isHotel && newRoomNum && newItem) || (!isHotel && newItem)) {
       const newId = serviceRequests.length + 1;
       const newCode = `TKT-${String(newId).padStart(3, '0')}`;
       const createdStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+      
+      const roomVal = isHotel ? (parseInt(newRoomNum) || 0) : 0;
+      const guestNameVal = isHotel ? 'Walk-in Guest / Room Service' : `Cafe Customer (Meja ${newTableNum || 'Umum'})`;
+
       setServiceRequests(prev => [
         ...prev,
         {
           id: newId,
-          roomNum: parseInt(newRoomNum),
+          roomNum: roomVal,
           item: newItem,
           status: 'Pending',
           code: newCode,
           priority: newPriority,
-          guestName: 'Walk-in Guest / Room Service',
+          guestName: guestNameVal,
           createdTime: createdStr
         }
       ]);
       setSelectedTicketId(newId);
       setIsNewTicketModalOpen(false);
       setNewRoomNum('');
+      setNewTableNum('');
       setNewItem('');
     }
   };
@@ -210,7 +218,7 @@ export default function CustomerServiceManagement({
   const handleExportCSV = () => {
     const headers = 'Ticket Code,Type,Room,Guest,Priority,Status,Created Time\n';
     const rows = enrichedTickets.map(t => {
-      return `#${t.code},"${t.type}",Kamar ${t.roomNum},${t.guestName},${t.priority},${t.status},${t.createdTime}`;
+      return `#${t.code},"${t.type}",${t.roomNum === 0 ? 'Cafe Standalone' : `Kamar ${t.roomNum}`},${t.guestName},${t.priority},${t.status},${t.createdTime}`;
     }).join('\n');
     
     const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
@@ -362,7 +370,7 @@ export default function CustomerServiceManagement({
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="font-bold text-gray-800">{t.guestName}</div>
-                        <div className="text-[10px] text-gray-400 font-semibold mt-0.5">Kamar {t.roomNum}</div>
+                        <div className="text-[10px] text-gray-400 font-semibold mt-0.5">{t.roomNum === 0 ? 'Cafe Standalone' : `Kamar ${t.roomNum}`}</div>
                       </td>
                       <td className="px-5 py-3.5">
                         {t.assigneeName !== 'Unassigned' ? (
@@ -426,7 +434,9 @@ export default function CustomerServiceManagement({
                 </div>
                 <div>
                   <h4 className="text-sm font-black text-[#1E3A5F]">{currentTicket.guestName}</h4>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">Tamu Hotel</p>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">
+                    {currentTicket.roomNum === 0 ? 'Pelanggan Cafe' : 'Tamu Hotel'}
+                  </p>
                 </div>
               </div>
 
@@ -434,7 +444,9 @@ export default function CustomerServiceManagement({
               <div className="grid grid-cols-2 gap-3 text-center">
                 <div className="bg-[#F5F7FA] border border-gray-200 rounded-lg p-2">
                   <p className="text-[9px] font-bold text-gray-400 uppercase">Kamar</p>
-                  <p className="text-xs font-extrabold text-[#1E3A5F] mt-0.5">Kamar {currentTicket.roomNum}</p>
+                  <p className="text-xs font-extrabold text-[#1E3A5F] mt-0.5">
+                    {currentTicket.roomNum === 0 ? 'Cafe Standalone' : `Kamar ${currentTicket.roomNum}`}
+                  </p>
                 </div>
                 <div className="bg-[#F5F7FA] border border-gray-200 rounded-lg p-2">
                   <p className="text-[9px] font-bold text-gray-400 uppercase">Masa Inap</p>
@@ -612,16 +624,58 @@ export default function CustomerServiceManagement({
             
             <form onSubmit={handleCreateTicket} className="p-5 space-y-4">
               <div>
-                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nomor Kamar</label>
-                <input
-                  type="number"
-                  required
-                  placeholder="Contoh: 104"
-                  value={newRoomNum}
-                  onChange={(e) => setNewRoomNum(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-xs font-semibold placeholder-gray-400 text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Tipe Lokasi</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setNewLocationType('Hotel')}
+                    className={`py-2 rounded-lg text-xs font-bold transition-all border ${
+                      newLocationType === 'Hotel'
+                        ? 'bg-[#1E3A5F] text-white border-[#1E3A5F] font-black shadow-3xs'
+                        : 'bg-white text-gray-705 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    Kamar Hotel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewLocationType('Cafe')}
+                    className={`py-2 rounded-lg text-xs font-bold transition-all border ${
+                      newLocationType === 'Cafe'
+                        ? 'bg-[#1E3A5F] text-white border-[#1E3A5F] font-black shadow-3xs'
+                        : 'bg-white text-gray-750 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    Cafe Standalone
+                  </button>
+                </div>
               </div>
+
+              {newLocationType === 'Hotel' ? (
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nomor Kamar</label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="Contoh: 104"
+                    value={newRoomNum}
+                    onChange={(e) => setNewRoomNum(e.target.value)}
+                    className="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-xs font-semibold placeholder-gray-400 text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nomor Meja Cafe / Area</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Meja 4, Meja Bar, Area Luar..."
+                    value={newTableNum}
+                    onChange={(e) => setNewTableNum(e.target.value)}
+                    className="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-xs font-semibold placeholder-gray-400 text-gray-805 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Permintaan / Keluhan Tamu</label>
