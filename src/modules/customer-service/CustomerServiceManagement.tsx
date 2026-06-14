@@ -6,14 +6,17 @@ import {
   Mail, 
   Clock, 
   Check, 
-  X 
+  X,
+  RotateCcw
 } from 'lucide-react';
-import type { ServiceRequest } from '../../types';
+import type { ServiceRequest, CSStaff } from '../../types';
 
 interface CSProps {
   serviceRequests: ServiceRequest[];
   setServiceRequests: React.Dispatch<React.SetStateAction<ServiceRequest[]>>;
   handleResolveCSRequest: (id: number) => void;
+  csStaffList: CSStaff[];
+  setCsStaffList: React.Dispatch<React.SetStateAction<CSStaff[]>>;
 }
 
 export interface EnrichedTicket {
@@ -34,7 +37,9 @@ export interface EnrichedTicket {
 export default function CustomerServiceManagement({ 
   serviceRequests, 
   setServiceRequests, 
-  handleResolveCSRequest 
+  handleResolveCSRequest,
+  csStaffList,
+  setCsStaffList
 }: CSProps) {
   const [selectedTicketId, setSelectedTicketId] = useState<number | null>(() => {
     return serviceRequests.length > 0 ? serviceRequests[0].id : null;
@@ -56,31 +61,21 @@ export default function CustomerServiceManagement({
   const getEnrichedTickets = (): EnrichedTicket[] => {
     return serviceRequests.map(req => {
       // Determine priority
-      let priority: 'Critical' | 'Medium' | 'Low' = 'Low';
-      if (req.item.toLowerCase().includes('ac') || req.item.toLowerCase().includes('bocor') || req.item.toLowerCase().includes('rusak') || req.id % 3 === 2) {
-        priority = 'Critical';
-      } else if (req.item.toLowerCase().includes('handuk') || req.item.toLowerCase().includes('ekstra') || req.id % 3 === 1) {
-        priority = 'Medium';
-      }
+      const priority = req.priority || 'Low';
 
       // Guest details
       const names = ['Alexander Pierce', 'Elena Rodriguez', 'Marcus Chen', 'Sophie Laurent', 'David Kim', 'Aisha Bello'];
-      const guestName = names[req.id % names.length];
+      const guestName = req.guestName || names[req.id % names.length];
       const stayDays = ['3/5', '1/3', '2/4', '4/7', '2/5'];
       const stayDay = stayDays[req.id % stayDays.length];
 
       // Assignee
-      let assigneeName = 'Unassigned';
-      if (req.status === 'On Progress') {
-        assigneeName = req.id % 2 === 0 ? 'John Doe' : 'Sara W.';
-      } else if (req.status === 'Resolved') {
-        assigneeName = req.id % 2 === 0 ? 'John Doe' : 'Sara W.';
-      }
+      const assigneeName = req.assigneeName || 'Unassigned';
 
-      const code = `TK-${8000 + req.id * 127}`;
-      const createdTime = `${(9 + (req.id % 3))}:45 AM`;
-      const assignedTime = req.status !== 'Pending' ? `${(9 + (req.id % 3))}:52 AM` : undefined;
-      const resolvedTime = req.status === 'Resolved' ? `${(10 + (req.id % 3))}:30 AM` : undefined;
+      const code = req.code || `TKT-${req.id.toString().padStart(3, '0')}`;
+      const createdTime = req.createdTime || `${(9 + (req.id % 3))}:45 AM`;
+      const assignedTime = req.status !== 'Pending' ? (req.assignedTime || `${(9 + (req.id % 3))}:52 AM`) : undefined;
+      const resolvedTime = req.status === 'Resolved' ? (req.resolvedTime || `${(10 + (req.id % 3))}:30 AM`) : undefined;
 
       return {
         id: req.id,
@@ -112,7 +107,7 @@ export default function CustomerServiceManagement({
                           t.roomNum.toString().includes(searchQuery);
 
     const matchesStatus = statusFilter === 'All' ? true : t.status === statusFilter;
-    const matchesPriority = priorityFilter === 'All' ? true : t.priority === priorityFilter;
+    const matchesPriority = true;
 
     return matchesSearch && matchesStatus && matchesPriority;
   });
@@ -126,13 +121,19 @@ export default function CustomerServiceManagement({
     e.preventDefault();
     if (newRoomNum && newItem) {
       const newId = serviceRequests.length + 1;
+      const newCode = `TKT-${String(newId).padStart(3, '0')}`;
+      const createdStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
       setServiceRequests(prev => [
         ...prev,
         {
           id: newId,
           roomNum: parseInt(newRoomNum),
           item: newItem,
-          status: 'Pending'
+          status: 'Pending',
+          code: newCode,
+          priority: newPriority,
+          guestName: 'Walk-in Guest / Room Service',
+          createdTime: createdStr
         }
       ]);
       setSelectedTicketId(newId);
@@ -149,6 +150,60 @@ export default function CustomerServiceManagement({
       }
       return req;
     }));
+  };
+
+  const handleEvenDistribution = () => {
+    const activeCS = csStaffList.filter(s => s.status === 'Working');
+    if (activeCS.length === 0) {
+      alert('Tidak ada staf Customer Service yang sedang aktif bekerja (Mulai Kerja). Harap aktifkan status kerja staf terlebih dahulu!');
+      return;
+    }
+
+    const pendingRequests = serviceRequests.filter(r => r.status === 'Pending');
+    if (pendingRequests.length === 0) {
+      alert('Tidak ada tiket antrean berkategori pending/open untuk dibagikan.');
+      return;
+    }
+
+    // Distribute pending requests to active CS staff
+    setServiceRequests(prev => {
+      let distributedCount = 0;
+      const updated = prev.map(req => {
+        if (req.status === 'Pending') {
+          const staffIndex = distributedCount % activeCS.length;
+          const targetStaff = activeCS[staffIndex];
+          distributedCount++;
+          return {
+            ...req,
+            status: 'On Progress' as const,
+            assigneeNip: targetStaff.id,
+            assigneeName: targetStaff.name,
+            assignedTime: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB'
+          };
+        }
+        return req;
+      });
+      return updated;
+    });
+
+    // Sync csStaffList assigned tickets
+    setCsStaffList(prev => {
+      return prev.map(s => {
+        if (s.status === 'Working') {
+          const ticketsAssigned = serviceRequests
+            .filter(r => r.status === 'Pending')
+            .filter((_, idx) => (idx % activeCS.length) === activeCS.findIndex(as => as.id === s.id))
+            .map(r => r.id);
+          return {
+            ...s,
+            assignedTickets: [...s.assignedTickets, ...ticketsAssigned]
+          };
+        }
+        return s;
+      });
+    });
+
+    alert(`Pembagian beban kerja berhasil! ${pendingRequests.length} tiket dibagikan secara merata ke ${activeCS.length} staf CS aktif.`);
   };
 
   const handleAddInternalNote = () => {
@@ -190,7 +245,7 @@ export default function CustomerServiceManagement({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari Tiket #, Tamu, atau Kamar..."
+              placeholder="cari kamar/nomor tamu"
               className="pl-8 pr-2.5 py-1.5 w-full bg-white border border-gray-300 rounded-lg text-xs font-semibold placeholder-gray-400 text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
@@ -207,21 +262,6 @@ export default function CustomerServiceManagement({
               <option value="Pending">Open</option>
               <option value="On Progress">In Progress</option>
               <option value="Resolved">Completed</option>
-            </select>
-          </div>
-
-          {/* Priority filter */}
-          <div className="flex items-center space-x-1 text-xs font-bold text-gray-400 uppercase">
-            <span className="text-[10px]">Priority:</span>
-            <select
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value as any)}
-              className="p-1 px-2 bg-white border border-gray-300 rounded-md text-[10px] font-bold uppercase focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-700 cursor-pointer"
-            >
-              <option value="All">All</option>
-              <option value="Critical">Critical</option>
-              <option value="Medium">Medium</option>
-              <option value="Low">Low</option>
             </select>
           </div>
         </div>
@@ -283,8 +323,16 @@ export default function CustomerServiceManagement({
             
             <div className="flex items-center space-x-2">
               <button
+                onClick={handleEvenDistribution}
+                className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-extrabold rounded-lg flex items-center space-x-1 cursor-pointer transition-colors shadow-3xs"
+                title="Bagi rata antrean tiket ke staf CS yang aktif"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Bagi Rata Tugas</span>
+              </button>
+              <button
                 onClick={handleExportCSV}
-                className="px-2.5 py-1.5 border border-gray-200 hover:bg-gray-50 text-gray-650 text-[10px] font-bold rounded-lg flex items-center space-x-1 cursor-pointer transition-colors shadow-3xs"
+                className="px-2.5 py-1.5 border border-gray-200 hover:bg-gray-50 text-gray-700 text-[10px] font-bold rounded-lg flex items-center space-x-1 cursor-pointer transition-colors shadow-3xs"
               >
                 <Download className="w-3 h-3" />
                 <span>Export CSV</span>
@@ -303,7 +351,7 @@ export default function CustomerServiceManagement({
                   <th className="px-5 py-3 text-[10px]">TICKET / TYPE</th>
                   <th className="px-5 py-3 text-[10px]">GUEST / ROOM</th>
                   <th className="px-5 py-3 text-[10px]">ASSIGNEE</th>
-                  <th className="px-5 py-3 text-[10px]">PRIORITY</th>
+                  <th className="px-5 py-3 text-[10px]">NO. TIKET</th>
                   <th className="px-5 py-3 text-[10px]">STATUS</th>
                 </tr>
               </thead>
@@ -338,14 +386,8 @@ export default function CustomerServiceManagement({
                           <span className="text-gray-400 italic font-semibold">Belum Ditugaskan</span>
                         )}
                       </td>
-                      <td className="px-5 py-3.5">
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-black border ${
-                          t.priority === 'Critical' ? 'bg-red-50 text-red-650 border-red-200' :
-                          t.priority === 'Medium' ? 'bg-blue-50 text-blue-650 border-blue-200' :
-                          'bg-gray-100 text-gray-500 border-gray-200'
-                        }`}>
-                          {t.priority}
-                        </span>
+                      <td className="px-5 py-3.5 font-bold text-gray-700">
+                        #{t.code}
                       </td>
                       <td className="px-5 py-3.5">
                         <span className="flex items-center space-x-1.5 font-bold">
@@ -491,16 +533,56 @@ export default function CustomerServiceManagement({
                 </div>
               </div>
 
+              {/* Assign CS Staff Dropdown */}
+              <div className="pt-2 border-t border-gray-155">
+                <label className="block text-[10px] font-bold text-gray-455 uppercase mb-1">Tugaskan Staf CS</label>
+                <select
+                  value={serviceRequests.find(r => r.id === currentTicket.id)?.assigneeNip || ''}
+                  onChange={(e) => {
+                    const selectedNip = e.target.value;
+                    const staffMember = csStaffList.find(s => s.id === selectedNip);
+                    setServiceRequests(prev => prev.map(req => {
+                      if (req.id === currentTicket.id) {
+                        return {
+                          ...req,
+                          status: selectedNip ? 'On Progress' : 'Pending',
+                          assigneeNip: selectedNip || undefined,
+                          assigneeName: staffMember ? staffMember.name : undefined,
+                          assignedTime: selectedNip ? new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB' : undefined
+                        };
+                      }
+                      return req;
+                    }));
+
+                    // Also update csStaffList
+                    setCsStaffList(prev => prev.map(s => {
+                      if (s.id === selectedNip) {
+                        return {
+                          ...s,
+                          assignedTickets: s.assignedTickets.includes(currentTicket.id)
+                            ? s.assignedTickets
+                            : [...s.assignedTickets, currentTicket.id]
+                        };
+                      }
+                      return {
+                        ...s,
+                        assignedTickets: s.assignedTickets.filter(tid => tid !== currentTicket.id)
+                      };
+                    }));
+                  }}
+                  className="w-full p-2 bg-white border border-gray-300 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-700 cursor-pointer"
+                >
+                  <option value="">Belum Ditugaskan / Antrean</option>
+                  {csStaffList.map(stf => (
+                    <option key={stf.id} value={stf.id}>
+                      {stf.name} {stf.status === 'Offline' ? '(Offline)' : '(Aktif)'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Action Buttons */}
               <div className="pt-2 border-t border-gray-155 flex gap-3">
-                {currentTicket.status === 'Pending' && (
-                  <button
-                    onClick={() => handleAssignToStaff(currentTicket.id)}
-                    className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors flex items-center justify-center space-x-1 shadow-sm"
-                  >
-                    <span>Tugaskan Staf</span>
-                  </button>
-                )}
 
                 {currentTicket.status !== 'Resolved' ? (
                   <button

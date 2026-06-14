@@ -89,9 +89,9 @@ export const INITIAL_CHECKOUTS: CheckOutGuest[] = [
 ];
 
 export const INITIAL_SERVICE_REQUESTS: ServiceRequest[] = [
-  { id: 1, roomNum: 107, item: 'Handuk tambahan', status: 'Pending' },
-  { id: 2, roomNum: 606, item: 'AC kurang dingin (panggil teknisi)', status: 'On Progress' },
-  { id: 3, roomNum: 202, item: 'Sajadah & Mukena ekstra', status: 'Pending' },
+  { id: 1, roomNum: 107, item: 'Handuk tambahan', status: 'Pending', priority: 'Medium', code: 'TKT-001', guestName: 'Alexander Pierce', createdTime: '09:45 AM' },
+  { id: 2, roomNum: 606, item: 'AC kurang dingin (panggil teknisi)', status: 'On Progress', priority: 'Critical', code: 'TKT-002', guestName: 'Elena Rodriguez', createdTime: '10:45 AM', assigneeName: 'John Doe', assigneeNip: 'CS-01' },
+  { id: 3, roomNum: 202, item: 'Sajadah & Mukena ekstra', status: 'Pending', priority: 'Low', code: 'TKT-003', guestName: 'Marcus Chen', createdTime: '11:45 AM' },
 ];
 
 export const INITIAL_FB_ORDERS: FBOrder[] = [

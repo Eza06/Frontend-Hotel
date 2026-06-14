@@ -10,7 +10,7 @@ import {
   ChevronRight,
   Plus
 } from 'lucide-react';
-import type { ServiceRequest, User } from '../../types';
+import type { ServiceRequest, User, CSStaff } from '../../types';
 
 interface CustomerServiceDashboardProps {
   serviceRequests: ServiceRequest[];
@@ -18,6 +18,8 @@ interface CustomerServiceDashboardProps {
   setServiceRequests: React.Dispatch<React.SetStateAction<ServiceRequest[]>>;
   loggedInUser: User | null;
   setActiveTab: (tab: any) => void;
+  csStaffList: CSStaff[];
+  setCsStaffList: React.Dispatch<React.SetStateAction<CSStaff[]>>;
 }
 
 export interface EnrichedCSTask {
@@ -30,6 +32,7 @@ export interface EnrichedCSTask {
   priority: 'Critical' | 'Medium' | 'Low';
   createdTime: string;
   assigneeName: string;
+  code?: string;
 }
 
 export default function CustomerServiceDashboard({
@@ -37,7 +40,9 @@ export default function CustomerServiceDashboard({
   handleResolveCSRequest,
   setServiceRequests,
   loggedInUser,
-  setActiveTab
+  setActiveTab,
+  csStaffList,
+  setCsStaffList
 }: CustomerServiceDashboardProps) {
 
   const staffName = loggedInUser?.name || 'Rina Lestari';
@@ -48,6 +53,23 @@ export default function CustomerServiceDashboard({
     month: 'long', 
     day: 'numeric' 
   });
+
+  const currentStaff = csStaffList.find(s => s.id === loggedInUser?.nip || s.name === staffName);
+  const isWorking = currentStaff ? currentStaff.status === 'Working' : false;
+
+  const handleStartWorking = () => {
+    setCsStaffList(prev => prev.map(s => (s.id === loggedInUser?.nip || s.name === staffName) ? { ...s, status: 'Working' } : s));
+  };
+
+  const handleStopWorking = () => {
+    setCsStaffList(prev => prev.map(s => (s.id === loggedInUser?.nip || s.name === staffName) ? { ...s, status: 'Offline', assignedTickets: [] } : s));
+    setServiceRequests(prev => prev.map(req => {
+      if (req.assigneeNip === loggedInUser?.nip || req.assigneeName === staffName) {
+        return { ...req, status: 'Pending', assigneeName: undefined, assigneeNip: undefined };
+      }
+      return req;
+    }));
+  };
 
   // Modal State for quick ticket creation
   const [isQuickTicketOpen, setIsQuickTicketOpen] = useState(false);
@@ -63,29 +85,18 @@ export default function CustomerServiceDashboard({
   // Enrich data for display (Guest Names, Stay days, priority, assignee etc)
   const getEnrichedTickets = (): EnrichedCSTask[] => {
     return serviceRequests.map(req => {
-      // Determine priority
-      let priority: 'Critical' | 'Medium' | 'Low' = 'Low';
-      if (req.item.toLowerCase().includes('ac') || req.item.toLowerCase().includes('bocor') || req.item.toLowerCase().includes('rusak') || req.id % 3 === 2) {
-        priority = 'Critical';
-      } else if (req.item.toLowerCase().includes('handuk') || req.item.toLowerCase().includes('ekstra') || req.id % 3 === 1) {
-        priority = 'Medium';
-      }
+      const priority = req.priority || 'Low';
 
       // Guest details
       const names = ['Alexander Pierce', 'Elena Rodriguez', 'Marcus Chen', 'Sophie Laurent', 'David Kim', 'Aisha Bello'];
-      const guestName = names[req.id % names.length];
+      const guestName = req.guestName || names[req.id % names.length];
       const stayDays = ['3/5', '1/3', '2/4', '4/7', '2/5'];
       const stayDay = stayDays[req.id % stayDays.length];
 
       // Assignee
-      let assigneeName = 'Unassigned';
-      if (req.status === 'On Progress') {
-        assigneeName = req.id % 2 === 0 ? 'John Doe' : 'Sara W.';
-      } else if (req.status === 'Resolved') {
-        assigneeName = req.id % 2 === 0 ? 'John Doe' : 'Sara W.';
-      }
+      const assigneeName = req.assigneeName || 'Unassigned';
 
-      const createdTime = `${(9 + (req.id % 3))}:45 AM`;
+      const createdTime = req.createdTime || `${(9 + (req.id % 3))}:45 AM`;
 
       return {
         id: req.id,
@@ -96,7 +107,8 @@ export default function CustomerServiceDashboard({
         stayDay,
         priority,
         createdTime,
-        assigneeName
+        assigneeName,
+        code: req.code || `TKT-${req.id.toString().padStart(3, '0')}`
       };
     });
   };
@@ -175,13 +187,29 @@ export default function CustomerServiceDashboard({
               </span>
               <span className="text-gray-300">•</span>
               <span className="flex items-center space-x-1.5">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span>Status: Active</span>
+                <span className={`w-2 h-2 rounded-full ${isWorking ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+                <span>Status: {isWorking ? 'Aktif Bekerja' : 'Offline'}</span>
               </span>
             </div>
           </div>
 
           <div className="flex items-center space-x-2.5">
+            {!isWorking ? (
+              <button
+                onClick={handleStartWorking}
+                className="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-xs font-black rounded-lg flex items-center justify-center space-x-1.5 shadow-3xs cursor-pointer transition-all active:scale-95"
+              >
+                <span>START WORKING</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleStopWorking}
+                className="px-4 py-2.5 bg-red-650 hover:bg-red-750 text-white text-xs font-black rounded-lg flex items-center justify-center space-x-1.5 shadow-3xs cursor-pointer transition-all active:scale-95"
+              >
+                <span>STOP WORKING</span>
+              </button>
+            )}
+
             <button
               onClick={() => setIsQuickTicketOpen(true)}
               className="px-4 py-2.5 bg-[#1E3A5F] hover:bg-[#1E3A5F]/95 text-white text-xs font-black rounded-lg flex items-center justify-center space-x-1.5 shadow-3xs cursor-pointer transition-colors"
@@ -264,7 +292,7 @@ export default function CustomerServiceDashboard({
                   <th className="py-3 px-4">Kamar</th>
                   <th className="py-3 px-4">Detail Permintaan / Item</th>
                   <th className="py-3 px-4">Nama Tamu</th>
-                  <th className="py-3 px-4">Prioritas</th>
+                  <th className="py-3 px-4">No. Tiket</th>
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4 text-right">Aksi Cepat</th>
                 </tr>
@@ -285,16 +313,8 @@ export default function CustomerServiceDashboard({
                         {task.item}
                       </td>
                       <td className="py-3 px-4 text-gray-500">{task.guestName}</td>
-                      <td className="py-3 px-4">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold border ${
-                          task.priority === 'Critical'
-                            ? 'bg-red-50 text-red-600 border-red-200'
-                            : task.priority === 'Medium'
-                            ? 'bg-blue-50 text-blue-700 border-blue-200'
-                            : 'bg-gray-100 text-gray-500 border-gray-200'
-                        }`}>
-                          {task.priority}
-                        </span>
+                      <td className="py-3 px-4 font-bold text-gray-650">
+                        #{task.code}
                       </td>
                       <td className="py-3 px-4">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold border ${
@@ -324,7 +344,7 @@ export default function CustomerServiceDashboard({
                             Selesaikan
                           </button>
                         ) : (
-                          <span className="text-gray-400 text-[10px] font-semibold">Ready</span>
+                          <span className="text-gray-400 text-[10px] font-semibold">Done</span>
                         )}
                       </td>
                     </tr>
@@ -416,11 +436,8 @@ export default function CustomerServiceDashboard({
                   <span className="font-mono text-gray-800">{currentTicket.createdTime}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Prioritas</span>
-                  <span className={`font-bold ${
-                    currentTicket.priority === 'Critical' ? 'text-red-600' :
-                    currentTicket.priority === 'Medium' ? 'text-blue-650' : 'text-gray-500'
-                  }`}>{currentTicket.priority}</span>
+                  <span>No. Tiket</span>
+                  <span className="font-mono text-gray-800">#{currentTicket.code}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Petugas</span>

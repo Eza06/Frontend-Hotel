@@ -17,7 +17,7 @@ import {
   ChevronRight,
   ClipboardList
 } from 'lucide-react';
-import type { Room, CheckInGuest, CheckOutGuest, ServiceRequest, User as UserType, Housekeeper, CleaningHistoryItem } from '../../types';
+import type { Room, CheckInGuest, CheckOutGuest, ServiceRequest, User as UserType, Housekeeper, CleaningHistoryItem, CSStaff } from '../../types';
 import HousekeepingDashboard from '../housekeeping/HousekeepingDashboard';
 import CustomerServiceDashboard from '../customer-service/CustomerServiceDashboard';
 
@@ -45,6 +45,8 @@ interface DashboardProps {
   setStaffList: React.Dispatch<React.SetStateAction<Housekeeper[]>>;
   cleaningHistory: CleaningHistoryItem[];
   setCleaningHistory: React.Dispatch<React.SetStateAction<CleaningHistoryItem[]>>;
+  csStaffList: CSStaff[];
+  setCsStaffList: React.Dispatch<React.SetStateAction<CSStaff[]>>;
 }
 
 export default function Dashboard({
@@ -70,7 +72,9 @@ export default function Dashboard({
   staffList,
   setStaffList,
   cleaningHistory,
-  setCleaningHistory
+  setCleaningHistory,
+  csStaffList,
+  setCsStaffList
 }: DashboardProps) {
   
   // Interactive Room States (used in Front Office view)
@@ -191,6 +195,8 @@ export default function Dashboard({
         setServiceRequests={setServiceRequests}
         loggedInUser={loggedInUser || null}
         setActiveTab={setActiveTab}
+        csStaffList={csStaffList}
+        setCsStaffList={setCsStaffList}
       />
     );
   }

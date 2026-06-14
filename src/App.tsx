@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { User, Room, CheckInGuest, CheckOutGuest, ServiceRequest, Housekeeper, CleaningHistoryItem } from './types';
+import type { User, Room, CheckInGuest, CheckOutGuest, ServiceRequest, Housekeeper, CleaningHistoryItem, CSStaff } from './types';
 import { 
   generateInitialRooms, 
   INITIAL_CHECKINS, 
@@ -46,6 +46,13 @@ export default function App() {
     { id: 'HK-02', name: 'Sarah Connor', status: 'Working', assignedRooms: ['204'] },
     { id: 'HK-03', name: 'Mike Jenkins', status: 'Offline', assignedRooms: [] },
     { id: 'HK-04', name: 'Agus Saputra', status: 'Offline', assignedRooms: [] },
+  ]);
+
+  // Lifted Customer Service States for synchronization & session management
+  const [csStaffList, setCsStaffList] = useState<CSStaff[]>([
+    { id: 'CS-01', name: 'John Doe', status: 'Working', assignedTickets: [2] },
+    { id: 'CS-02', name: 'Sara W.', status: 'Working', assignedTickets: [] },
+    { id: 'NIP-CS', name: 'Rina Lestari', status: 'Offline', assignedTickets: [] },
   ]);
 
   const [cleaningHistory, setCleaningHistory] = useState<CleaningHistoryItem[]>([
@@ -178,6 +185,8 @@ export default function App() {
               setStaffList={setStaffList}
               cleaningHistory={cleaningHistory}
               setCleaningHistory={setCleaningHistory}
+              csStaffList={csStaffList}
+              setCsStaffList={setCsStaffList}
             />
           )}
 
@@ -221,6 +230,8 @@ export default function App() {
               serviceRequests={serviceRequests}
               setServiceRequests={setServiceRequests}
               handleResolveCSRequest={handleResolveCSRequest}
+              csStaffList={csStaffList}
+              setCsStaffList={setCsStaffList}
             />
           )}
 

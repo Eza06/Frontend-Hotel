@@ -38,6 +38,12 @@ export interface ServiceRequest {
   roomNum: number;
   item: string;
   status: 'Pending' | 'On Progress' | 'Resolved';
+  assigneeNip?: string;
+  assigneeName?: string;
+  priority?: 'Critical' | 'Medium' | 'Low';
+  code?: string;
+  guestName?: string;
+  createdTime?: string;
 }
 
 export interface FBOrder {
@@ -99,4 +105,11 @@ export interface CleaningHistoryItem {
   endTime: string;
   duration: string;
   status: 'Completed';
+}
+
+export interface CSStaff {
+  id: string;
+  name: string;
+  status: 'Working' | 'Offline';
+  assignedTickets: number[]; // ticket IDs
 }

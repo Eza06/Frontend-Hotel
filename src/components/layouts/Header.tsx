@@ -56,7 +56,7 @@ export default function Header({ activeTab, loggedInUser, currentTime }: HeaderP
           </div>
           <input
             type="text"
-            placeholder="Cari data operasional..."
+            placeholder="cari kamar/nomor tamu"
             className="block w-full pl-9 pr-3 py-1.5 border border-gray-200 rounded-lg text-xs placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#1E3A5F] focus:border-[#1E3A5F] bg-[#F5F7FA] text-gray-800"
           />
         </div>
